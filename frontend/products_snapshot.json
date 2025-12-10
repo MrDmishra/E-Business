@@ -1,0 +1,121 @@
+﻿[
+    {
+        "id":  1,
+        "name":  "Sample Product",
+        "description":  "This is a sample product inserted for testing.",
+        "price":  9.99,
+        "imageUrl":  null
+    },
+    {
+        "id":  2,
+        "name":  "Inserted Product A",
+        "description":  "Inserted from data.sql for testing",
+        "price":  19.99,
+        "imageUrl":  null
+    },
+    {
+        "id":  3,
+        "name":  "Inserted Product B",
+        "description":  "Another test product",
+        "price":  29.99,
+        "imageUrl":  null
+    },
+    {
+        "id":  4,
+        "name":  "Inserted Product A",
+        "description":  "Inserted from data.sql for testing",
+        "price":  19.99,
+        "imageUrl":  null
+    },
+    {
+        "id":  5,
+        "name":  "Inserted Product B",
+        "description":  "Another test product",
+        "price":  29.99,
+        "imageUrl":  null
+    },
+    {
+        "id":  6,
+        "name":  "Inserted Product A",
+        "description":  "Inserted from data.sql for testing",
+        "price":  19.99,
+        "imageUrl":  null
+    },
+    {
+        "id":  7,
+        "name":  "Inserted Product B",
+        "description":  "Another test product",
+        "price":  29.99,
+        "imageUrl":  null
+    },
+    {
+        "id":  8,
+        "name":  "Inserted Product A",
+        "description":  "Inserted from data.sql for testing",
+        "price":  19.99,
+        "imageUrl":  null
+    },
+    {
+        "id":  9,
+        "name":  "Inserted Product B",
+        "description":  "Another test product",
+        "price":  29.99,
+        "imageUrl":  null
+    },
+    {
+        "id":  10,
+        "name":  "Inserted Product A",
+        "description":  "Inserted from data.sql for testing",
+        "price":  19.99,
+        "imageUrl":  null
+    },
+    {
+        "id":  11,
+        "name":  "Inserted Product B",
+        "description":  "Another test product",
+        "price":  29.99,
+        "imageUrl":  null
+    },
+    {
+        "id":  12,
+        "name":  "Inserted Product A",
+        "description":  "Inserted from data.sql for testing",
+        "price":  19.99,
+        "imageUrl":  null
+    },
+    {
+        "id":  13,
+        "name":  "Inserted Product B",
+        "description":  "Another test product",
+        "price":  29.99,
+        "imageUrl":  null
+    },
+    {
+        "id":  14,
+        "name":  "Inserted Product A",
+        "description":  "Inserted from data.sql for testing",
+        "price":  19.99,
+        "imageUrl":  null
+    },
+    {
+        "id":  15,
+        "name":  "Inserted Product B",
+        "description":  "Another test product",
+        "price":  29.99,
+        "imageUrl":  null
+    },
+    {
+        "id":  16,
+        "name":  "Inserted Product A",
+        "description":  "Inserted from data.sql for testing",
+        "price":  19.99,
+        "imageUrl":  null
+    },
+    {
+        "id":  17,
+        "name":  "Inserted Product B",
+        "description":  "Another test product",
+        "price":  29.99,
+        "imageUrl":  null
+    }
+]
