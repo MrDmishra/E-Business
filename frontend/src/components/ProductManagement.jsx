@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
+import { useAlert } from '../context/AlertContext'
 
 export default function ProductManagement() {
+  const alert = useAlert()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -53,7 +55,7 @@ export default function ProductManagement() {
     e.preventDefault()
     
     if (!formData.name.trim()) {
-      alert('Product name is required')
+      alert.warning('Missing Field', 'Product name is required')
       return
     }
 
@@ -64,7 +66,7 @@ export default function ProductManagement() {
     )
     
     if (isDuplicate) {
-      alert('A product with this name already exists. Please choose a different name.')
+      alert.warning('Duplicate Name', 'A product with this name already exists. Please choose a different name.')
       return
     }
 
@@ -96,8 +98,13 @@ export default function ProductManagement() {
       await fetchProducts()
       resetForm()
       setShowModal(false)
+      
+      alert.success(
+        editingId ? 'Product Updated' : 'Product Created',
+        editingId ? 'Product updated successfully' : 'New product created successfully'
+      )
     } catch (err) {
-      alert(`Error: ${err.message}`)
+      alert.error('Operation Failed', `Error: ${err.message}`)
     }
   }
 
@@ -125,8 +132,10 @@ export default function ProductManagement() {
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       await fetchProducts()
+      
+      alert.success('Product Deleted', 'Product removed successfully')
     } catch (err) {
-      alert(`Error: ${err.message}`)
+      alert.error('Delete Failed', `Error: ${err.message}`)
     }
   }
 

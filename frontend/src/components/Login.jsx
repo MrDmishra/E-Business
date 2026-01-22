@@ -27,8 +27,16 @@ export default function Login({ onLoginSuccess }) {
       })
 
       if (!res.ok) {
-        const errData = await res.json()
-        throw new Error(errData.error || 'Request failed')
+        let errorMessage = 'Request failed'
+        try {
+          const errData = await res.json()
+          errorMessage = errData.error || errorMessage
+        } catch (parseErr) {
+          // If response is not JSON, use status text
+          const text = await res.text()
+          errorMessage = text || res.statusText || `Error ${res.status}`
+        }
+        throw new Error(errorMessage)
       }
 
       const data = await res.json()

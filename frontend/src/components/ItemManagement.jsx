@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
+import { useAlert } from '../context/AlertContext'
 
 export default function ItemManagement() {
+  const alert = useAlert()
   const [items, setItems] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
@@ -96,12 +98,12 @@ export default function ItemManagement() {
     e.preventDefault()
     
     if (!formData.itemName.trim()) {
-      alert('Item name is required')
+      alert.warning('Missing Field', 'Item name is required')
       return
     }
 
-    if (!formData.price || parseFloat(formData.price) <= 0) {
-      alert('Valid price is required')
+    if (!formData.price || isNaN(formData.price) || formData.price <= 0) {
+      alert.warning('Invalid Price', 'Valid price is required')
       return
     }
 
@@ -144,8 +146,13 @@ export default function ItemManagement() {
       await fetchItems()
       resetForm()
       setShowModal(false)
+      
+      alert.success(
+        editingId ? 'Item Updated' : 'Item Created',
+        editingId ? 'Item updated successfully' : 'New item created successfully'
+      )
     } catch (err) {
-      alert(`Error: ${err.message}`)
+      alert.error('Operation Failed', `Error: ${err.message}`)
     }
   }
 
@@ -176,8 +183,9 @@ export default function ItemManagement() {
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       await fetchItems()
+      alert.success('Item Deleted', 'Item deleted successfully')
     } catch (err) {
-      alert(`Error: ${err.message}`)
+      alert.error('Delete Failed', `Error: ${err.message}`)
     }
   }
 
@@ -254,19 +262,6 @@ export default function ItemManagement() {
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1>Item Management</h1>
-        <button 
-          className="btn btn-primary"
-          onClick={() => {
-            resetForm()
-            setShowModal(true)
-          }}
-        >
-          + New Item
-        </button>
-      </div>
-
       {error && <div className="error-message">{error}</div>}
 
       {showModal && (
@@ -437,23 +432,35 @@ export default function ItemManagement() {
       <div className="table-container">
         <div className="table-header">
           <h2>Items ({filteredItems.length})</h2>
-          <div className="search-container-inline">
-            <input
-              type="text"
-              placeholder="🔍 Search items..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input-inline"
-            />
-            {searchTerm && (
-              <button
-                className="clear-search-inline"
-                onClick={() => setSearchTerm('')}
-                title="Clear search"
-              >
-                ✕
-              </button>
-            )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="search-container-inline">
+              <input
+                type="text"
+                placeholder="🔍 Search items..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input-inline"
+              />
+              {searchTerm && (
+                <button
+                  className="clear-search-inline"
+                  onClick={() => setSearchTerm('')}
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <button 
+              className="btn btn-primary"
+              onClick={() => {
+                resetForm()
+                setShowModal(true)
+              }}
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              + New Item
+            </button>
           </div>
         </div>
 

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
+import { useAlert } from '../context/AlertContext'
 import './CategoryManagement.css'
 
 export default function CategoryManagement() {
+  const alert = useAlert()
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -49,7 +51,7 @@ export default function CategoryManagement() {
     e.preventDefault()
     
     if (!formData.categoryName.trim()) {
-      alert('Category name is required')
+      alert.warning('Missing Field', 'Category name is required')
       return
     }
 
@@ -60,7 +62,7 @@ export default function CategoryManagement() {
     )
     
     if (isDuplicate) {
-      alert('A category with this name already exists. Please choose a different name.')
+      alert.warning('Duplicate Name', 'A category with this name already exists. Please choose a different name.')
       return
     }
 
@@ -92,8 +94,14 @@ export default function CategoryManagement() {
       await fetchCategories()
       resetForm()
       setShowModal(false)
+      
+      // Show success alert
+      alert.success(
+        editingId ? 'Category Updated' : 'Category Created',
+        editingId ? 'Category updated successfully' : 'New category created successfully'
+      )
     } catch (err) {
-      alert(`Error: ${err.message}`)
+      alert.error('Operation Failed', `Error: ${err.message}`)
     }
   }
 
@@ -116,8 +124,11 @@ export default function CategoryManagement() {
       })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       await fetchCategories()
+      
+      // Show success alert
+      alert.success('Category Deleted', 'Category removed successfully')
     } catch (err) {
-      alert(`Error: ${err.message}`)
+      alert.error('Delete Failed', `Error: ${err.message}`)
     }
   }
 
@@ -158,19 +169,6 @@ export default function CategoryManagement() {
 
   return (
     <div className="page-container">
-      <div className="page-header">
-        <h1>Category Management</h1>
-        <button 
-          className="btn btn-primary"
-          onClick={() => {
-            resetForm()
-            setShowModal(true)
-          }}
-        >
-          + New Category
-        </button>
-      </div>
-
       {error && <div className="error-message">{error}</div>}
 
       {/* Category Modal Popup */}
@@ -242,23 +240,35 @@ export default function CategoryManagement() {
       <div className="table-container">
         <div className="table-header">
           <h2>Categories ({filteredCategories.length})</h2>
-          <div className="search-container-inline">
-            <input
-              type="text"
-              placeholder="🔍 Search categories..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-input-inline"
-            />
-            {searchTerm && (
-              <button
-                className="clear-search-inline"
-                onClick={() => setSearchTerm('')}
-                title="Clear search"
-              >
-                ✕
-              </button>
-            )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="search-container-inline">
+              <input
+                type="text"
+                placeholder="🔍 Search categories..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input-inline"
+              />
+              {searchTerm && (
+                <button
+                  className="clear-search-inline"
+                  onClick={() => setSearchTerm('')}
+                  title="Clear search"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <button 
+              className="btn btn-primary"
+              onClick={() => {
+                resetForm()
+                setShowModal(true)
+              }}
+              style={{ whiteSpace: 'nowrap' }}
+            >
+              + New Category
+            </button>
           </div>
         </div>
 

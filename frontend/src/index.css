@@ -238,6 +238,7 @@ h1 {
   border-radius: 14px;
   box-shadow: var(--shadow);
   padding: 16px 18px;
+  margin-bottom: 24px;
 }
 
 .kpi-row {
@@ -519,4 +520,88 @@ h1 {
   background: linear-gradient(180deg, #f7f9fc 0%, #eef2f8 100%);
   font-size: 16px;
   color: var(--muted);
+}
+
+/* React Quill Rich Text Editor Styling */
+.quill {
+  margin-bottom: 16px;
+}
+
+.ql-container {
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
+  font-size: 14px;
+  min-height: 200px;
+}
+
+.ql-toolbar {
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  background: #f9fafb;
+}
+
+.ql-editor {
+  min-height: 200px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ql-editor.ql-blank::before {
+  color: #9ca3af;
+  font-style: normal;
+}
+
+.ql-snow .ql-picker {
+  font-size: 14px;
+}
+
+/* Rich text display styling */
+.rich-text-display {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.rich-text-display img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+  margin: 12px 0;
+}
+
+.rich-text-display table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 12px 0;
+}
+
+.rich-text-display table td,
+.rich-text-display table th {
+  border: 1px solid #e5e7eb;
+  padding: 8px;
+}
+
+.rich-text-display table th {
+  background: #f9fafb;
+  font-weight: 600;
+}
+
+.rich-text-display blockquote {
+  border-left: 4px solid #2563eb;
+  padding-left: 16px;
+  margin: 12px 0;
+  color: #6b7280;
+}
+
+.rich-text-display pre {
+  background: #f3f4f6;
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.rich-text-display code {
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 13px;
 }

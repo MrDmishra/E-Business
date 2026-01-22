@@ -2,32 +2,60 @@
 
 ## Architecture Overview
 
-This is a **Spring Boot 3.3.5 + Static React** e-commerce application with a clear backend/frontend separation:
+This is a **multi-frontend e-commerce platform** with Spring Boot backend and three separate frontends:
 
-- **Backend**: Java 21, Spring Boot with JPA, Spring Security (JWT skeleton), PostgreSQL/MySQL support
-- **Frontend**: Static React via CDN (no build step) - uses in-browser Babel transformation for JSX
-- **Database**: Flyway migrations disabled; uses `data.sql`/`schema.sql` for initialization with `spring.sql.init.mode=always`
+- **Backend**: Java 21, Spring Boot 3.5.0 with JPA, Spring Security (JWT implemented), MySQL primary/PostgreSQL optional
+- **Admin Frontend** (`frontend/`): React + Vite on port 5173 - admin dashboard with product/order/customer management
+- **Customer Frontend** (`customer-frontend/`): React + Vite on port 3000 - public shopping site with modern gradient UI (purple-blue theme)
+- **Mobile App** (`mobile-app/`): React Native with Expo - native iOS/Android shopping app
 
-**Key architectural decision**: The frontend is intentionally kept as a simple static `index.html` using CDN-hosted React for rapid prototyping without build tooling. For production, assets should be precompiled.
+**Critical architectural insight**: This codebase has TWO product/item models (`Product` and `Item`) that coexist:
+- **Product**: Legacy table with simple structure (id, name, price, description, imageUrl) in `products` table
+- **Item**: Full-featured model with SKU, brand, weight, ItemStatus enum, relationships to ItemImage and ItemCategory in `items` table
+- Controllers serve both models: `ProductController` and `ItemController` exist separately
+- Customer frontend and mobile app primarily use Items API (`/api/items`), admin frontend manages both
+
+**Database**: Flyway disabled (`spring.flyway.enabled=false`), schema managed via JPA `ddl-auto=update` + manual `schema.sql`
+- Database name typo: `ebussiness` (not `ebusiness`) in `application.properties` - keep for compatibility
 
 ## Project Structure
 
 ```
 backend/
   src/main/java/com/example/ecommerce/
-    controller/      # REST endpoints (e.g., ProductController)
-    model/           # JPA entities (e.g., Product)
+    controller/      # 15+ REST controllers (ProductController, ItemController, OrderController, CartController, etc.)
+    model/           # 30+ JPA entities (dual Product/Item model, Consumer, Order, Cart, Review, Banner, Coupon, etc.)
     repository/      # Spring Data JPA repositories
-    security/        # SecurityConfig with JWT skeleton (JwtUtil exists but auth not fully wired)
+    dto/             # Data Transfer Objects (ItemDTO for complex item responses with images/categories)
+    security/        # SecurityConfig (CORS enabled for all 3 frontends), JwtUtil (fully wired)
   src/main/resources/
-    application.properties      # MySQL config (port 8080)
-    application-prod.properties # PostgreSQL variant
-    data.sql / schema.sql       # Initial DB data (runs on startup)
-    db/migration/               # Flyway migrations (currently disabled)
-    static/                     # Serve frontend from here for integration
-frontend/
-  index.html       # Single-file React app (uses CDN, Babel in-browser)
-docker-compose.yml # PostgreSQL 15 container (user: postgres, pass: postgres, db: ecommerce)
+    application.properties      # MySQL config (localhost:3306, db=ebussiness, user=root, port 8080)
+    schema.sql                 # Full database schema (manual maintenance, not auto-loaded)
+    data.sql                   # Initial seed data (exists but not loaded due to spring.sql.init.mode=never)
+    db/migration/              # Flyway migrations (exist but disabled via spring.flyway.enabled=false)
+frontend/                      # Admin dashboard (React + Vite)
+  src/
+    components/                # ProductManagement, ItemManagement, OrderManagement, CategoryManagement, etc.
+                              # NotificationBar, ToastNotification (alert system)
+    context/AlertContext.jsx   # Provides useAlert() hook for success/error/warning/info alerts
+    App.jsx                    # Tab-based admin UI with 30min auto-logout, localStorage session persistence
+  vite.config.js               # Dev proxy to :8080, builds to ../backend/src/main/resources/static/
+  ALERT_SYSTEM_GUIDE.md        # Documentation for using alert system with useAlert() hook
+  RICH_TEXT_GUIDE.md           # Documentation for Quill rich text editor (used in ShippingInfo, etc.)
+customer-frontend/             # Customer-facing shop (React + Vite)
+  src/
+    pages/                     # HomePage, ProductPage, CartPage, CheckoutPage, LoginPage, etc.
+    components/                # Header, Footer
+    App.jsx                    # Client-side routing via state, cart persistence in localStorage
+  index.css                    # Global styles with custom animations (@keyframes spin, fadeIn, slideInLeft/Right)
+  vite.config.js               # Dev proxy to :8080, port 3000
+  DESIGN_UPDATE.md             # Design system documentation (purple-blue gradient theme, glass-morphism)
+mobile-app/                    # React Native app (Expo)
+  src/
+    screens/                   # HomeScreen, ProductScreen, CartScreen, CheckoutScreen, etc.
+    context/                   # AuthContext, CartContext
+    services/api.js            # Axios client (API_BASE_URL configuration - MUST match local IP)
+docker-compose.yml             # PostgreSQL 15 container (not used by default, MySQL is primary)
 ```
 
 ## Development Workflows
@@ -39,147 +67,199 @@ docker-compose.yml # PostgreSQL 15 container (user: postgres, pass: postgres, db
 cd "c:\Users\deepesh.mishra\Desktop\E Business\backend"
 mvn spring-boot:run
 ```
-Backend runs on `http://localhost:8080` with API at `/api/products`.
+Backend runs on `http://localhost:8080` with API at `/api/*`.
 
-**Database** (PostgreSQL via Docker):
+**Database**: Default uses **MySQL** (localhost:3306, user=root, pass=root, db=ebussiness). PostgreSQL via Docker exists but is not the default:
 ```powershell
-docker-compose up -d
+docker-compose up -d  # PostgreSQL on :5432 (user=postgres, pass=postgres, db=ecommerce)
 ```
-Note: Default `application.properties` uses **MySQL** (localhost:3306, root/root). Switch to PostgreSQL by using `-Dspring.profiles.active=prod` or copy `application-prod.properties` settings.
 
-**Frontend Options**:
-1. **Development**: Open `frontend/index.html` directly in browser (calls backend at localhost:8080)
-2. **Integrated**: Copy `frontend/index.html` to `backend/src/main/resources/static/index.html` and access via `http://localhost:8080/`
+**Admin Frontend** (port 5173):
+```powershell
+cd frontend
+npm run dev
+```
+Access at `http://localhost:5173`. Includes 30-minute auto-logout feature with localStorage persistence.
+
+**Customer Frontend** (port 3000):
+```powershell
+cd customer-frontend
+npm run dev
+```
+Access at `http://localhost:3000`. Features modern gradient UI (purple-blue theme) with glass-morphism effects.
+
+**Mobile App** (Expo):
+```powershell
+cd mobile-app
+npm start
+# Then: npm run android / npm run ios / npm run web
+```
+**Critical**: Update `API_BASE_URL` in `mobile-app/src/services/api.js` to match your local IP (e.g., `http://172.20.10.3:8080/api` for physical devices, `http://10.0.2.2:8080/api` for Android emulator).
 
 ### Testing
 
-Run integration tests:
+Run backend tests (currently no test files exist - placeholder for future):
 ```powershell
 cd backend
 mvn test
 ```
-Tests use H2 in-memory database (see `application-test.properties`). Example test: `ProductControllerIntegrationTest.java` validates API endpoints.
 
 ### Building
 
+**Backend JAR**:
 ```powershell
 cd backend
 mvn clean package
 ```
-Generates `target/ecommerce-backend-0.0.1-SNAPSHOT.jar` (executable JAR).
+Generates `target/ecommerce-backend-0.0.1-SNAPSHOT.jar`.
+
+**Admin Frontend Build** (outputs to backend static resources):
+```powershell
+cd frontend
+npm run build  # Outputs to ../backend/src/main/resources/static/
+cd ../backend
+mvn clean package  # JAR includes admin frontend
+```
+
+**Customer Frontend Build**:
+```powershell
+cd customer-frontend
+npm run build  # Outputs to dist/
+```
 
 ## Critical Conventions
 
 ### Database Management
 - **Flyway is DISABLED** (`spring.flyway.enabled=false`)
-- Schema/data initialization uses Spring's `spring.sql.init.mode=always` with `schema.sql` and `data.sql`
+- Schema initialization: JPA `ddl-auto=update` + manual `schema.sql` (note: `spring.sql.init.mode=never`)
 - Flyway migrations exist in `db/migration/` but are not active
-- When switching databases, update both `spring.datasource.*` properties AND change `ddl-auto` if needed
+- **Dual model architecture**: Both `Product` (legacy) and `Item` (full-featured) tables exist
+  - `Product`: Simple 5-field table (id, name, description, price, imageUrl)
+  - `Item`: Complex model with SKU, brand, weight, ItemStatus enum, relationships to ItemImage and ItemCategory
+  - When creating features, prefer `Item` unless maintaining legacy endpoints
 
 ### Security Configuration
-- Spring Security is configured but **CSRF is globally disabled** (see `SecurityConfig.java`)
-- Public endpoints: `/api/products/**`, `/api/auth/**`, all static resources
-- JWT utilities exist (`security/JwtUtil` skeleton) but full auth flow is **not implemented**
-- JWT secret configured in `application.properties` (`app.jwtSecret`) - change for production
+- Spring Security configured with CORS fully enabled for all three frontends
+- **CSRF globally disabled** (`SecurityConfig.java`)
+- Public endpoints: All `/api/**` routes currently public (see `SecurityConfig` for full list)
+- JWT utilities exist and **ARE wired** (`AuthController` implements login/register with `JwtUtil`)
+- Plain-text password comparison (TODO comment exists - add BCrypt hashing for production)
+- JWT secret in `application.properties` (`app.jwtSecret`) - change for production
 
 ### API Design
 - RESTful endpoints under `/api/*` namespace
+- 15+ controllers including: ProductController, ItemController, OrderController, CartController, ReviewController, etc.
 - Controllers use constructor injection (no `@Autowired` on fields)
-- Standard Spring Data JPA pattern: `JpaRepository<Entity, ID>` interfaces with no custom implementations
-- Example: `ProductController` → `ProductRepository` → `Product` entity
+- Standard Spring Data JPA pattern: `JpaRepository<Entity, ID>` interfaces
+- DTOs exist for complex responses (`dto/` package) - use for cart, orders, reviews, etc.
 
 ### Entity Patterns
 - JPA entities use `@Entity`, `@Table(name="...")`, `@GeneratedValue(strategy=IDENTITY)`
-- No Lombok - explicit getters/setters (comment in `pom.xml` notes Lombok was removed)
-- BigDecimal for monetary values (see `Product.price`)
+- **No Lombok** - explicit getters/setters (`pom.xml` comment notes Lombok removed)
+- BigDecimal for monetary values (price fields)
+- Enums for status fields (e.g., `ItemStatus.ACTIVE`, `ItemStatus.OUT_OF_STOCK`)
 
 ### Frontend Integration
-- React app fetches from `/api/products` (expects JSON array)
-- No CORS issues when served from same origin (backend's `/static` folder)
-- CSS is inline in `<style>` tag - utility-first approach with custom properties
+- **Admin Frontend** (`frontend/`): 
+  - Tab-based UI with 30-minute auto-logout timer stored in localStorage
+  - Alert system via `AlertContext`: Use `useAlert()` hook for success/error/warning/info notifications
+  - Quill rich text editor for descriptions (see `RICH_TEXT_GUIDE.md`)
+  - NotificationBar + ToastNotification components for dual alert display (toast + persistent notifications)
+- **Customer Frontend** (`customer-frontend/`): 
+  - Client-side routing via state management (no React Router)
+  - Cart persistence in localStorage
+  - Modern purple-blue gradient UI theme with glass-morphism effects (see `DESIGN_UPDATE.md`)
+  - Custom animations: `@keyframes spin`, `fadeIn`, `slideInLeft`, `slideInRight` in `index.css`
+  - Hero sections, pill-style category filters, gradient CTAs
+- **Mobile App**: 
+  - AsyncStorage for cart/user persistence
+  - React Navigation with bottom tabs
+  - Requires IP configuration in `api.js` (physical device vs emulator)
+- All frontends use Vite dev proxy (`/api` → `http://localhost:8080`) for CORS-free development
 
 ## Common Tasks
 
 ### Adding a New Entity
-1. Create JPA entity in `model/` with `@Entity`, `@Table`, getters/setters
+1. Create JPA entity in `model/` with `@Entity`, `@Table`, getters/setters (no Lombok)
 2. Create repository interface extending `JpaRepository<Entity, ID>` in `repository/`
 3. Add controller in `controller/` with `@RestController`, `@RequestMapping("/api/entityname")`
-4. Update `schema.sql` or add Flyway migration if enabling Flyway
-5. Add test data to `data.sql` if needed
+4. Update `schema.sql` with CREATE TABLE statement (Flyway disabled, manual SQL maintenance)
+5. If needed, create DTO in `dto/` package for complex responses
+6. Add public endpoint to `SecurityConfig` if unauthenticated access required
 
-### Implementing JWT Auth
-The skeleton exists but needs:
-1. User entity + repository
-2. `/api/auth/login` and `/api/auth/register` endpoints
-3. Wire `JwtUtil` into a filter (extend `OncePerRequestFilter`)
-4. Update `SecurityConfig` to add JWT filter before `UsernamePasswordAuthenticationFilter`
+### Working with Dual Product Models
+- **Use `Item`** for new features (full model with categories, images, inventory)
+- **Use `Product`** only when maintaining existing legacy endpoints
+- ItemController and ProductController both exist - check which clients use which
+- Customer frontend and mobile app primarily use Items API (`/api/items`)
+- Admin frontend has separate management for both Products and Items
+
+### Implementing Authentication Features
+JWT is already implemented:
+1. `AuthController` has `/api/auth/login` and `/api/auth/register` working
+2. `JwtUtil` generates tokens (configured secret in `application.properties`)
+3. **TODO**: Add BCrypt password hashing (currently plain-text comparison)
+4. **TODO**: Add JWT filter for protected endpoints (skeleton exists but not enforced)
+5. User entity exists with name/email/password fields
 
 ### Switching to PostgreSQL
-Use the `prod` profile or update `application.properties`:
+Use the Docker container or local PostgreSQL:
 ```properties
 spring.datasource.url=jdbc:postgresql://localhost:5432/ecommerce
 spring.datasource.driverClassName=org.postgresql.Driver
 spring.datasource.username=postgres
 spring.datasource.password=postgres
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
 ```
-Ensure `docker-compose up -d` is running.
+Ensure `docker-compose up -d` is running if using containerized DB.
 
 ### Production Frontend Build with Vite
 
-The current `frontend/index.html` uses CDN React for development only. For production:
+Both admin and customer frontends use Vite for production builds:
 
-**1. Set up Vite build structure:**
+**Admin Frontend** (builds to backend static resources):
 ```powershell
 cd frontend
-# Create proper React + Vite structure if not already done
-npm install vite @vitejs/plugin-react react react-dom
+npm run build  # vite.config.js outputs to ../backend/src/main/resources/static/
 ```
 
-**2. Configure `vite.config.js`:**
-```javascript
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-export default defineConfig({
-  plugins: [react()],
-  build: {
-    outDir: '../backend/src/main/resources/static',
-    emptyOutDir: true
-  },
-  server: {
-    proxy: {
-      '/api': 'http://localhost:8080'
-    }
-  }
-})
-```
-
-**3. Create proper React entry files:**
-- Move JSX from `index.html` `<script type="text/babel">` to `src/main.jsx`
-- Create `src/App.jsx` for component logic
-- Update `public/index.html` to standard HTML (no inline scripts)
-- Import React normally: `import React from 'react'` instead of `const React = window.React`
-
-**4. Build and deploy:**
+**Customer Frontend** (standalone build):
 ```powershell
-cd frontend
-npm run build  # Outputs to backend/src/main/resources/static/
-cd ../backend
-mvn clean package  # Creates JAR with bundled frontend
+cd customer-frontend
+npm run build  # Outputs to dist/ directory
 ```
 
-**5. Package.json scripts:**
-```json
-{
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  }
-}
+**Mobile App** (Expo builds):
+```powershell
+cd mobile-app
+# For development builds
+eas build --profile development --platform android
+eas build --profile development --platform ios
+
+# For production
+eas build --profile production --platform all
 ```
 
-After building, the Spring Boot JAR will serve the compiled React app at `http://localhost:8080/` with all assets properly bundled.
+After building admin frontend, package with Spring Boot:
+```powershell
+cd backend
+mvn clean package  # Creates JAR with bundled frontend at root path
+```
+
+## Mobile App Configuration
+
+### API URL Setup (CRITICAL)
+Update `mobile-app/src/services/api.js` based on environment:
+- **Physical Android Device**: Use computer's local network IP (e.g., `http://172.20.10.3:8080/api`)
+- **Android Emulator**: `http://10.0.2.2:8080/api` 
+- **iOS Simulator**: `http://localhost:8080/api`
+- Find your IP: Run `ipconfig` (Windows) and look for IPv4 under Wi-Fi/Ethernet
+
+### Common Mobile Issues
+1. **API not connecting**: Verify backend is running and IP address is correct
+2. **CORS errors**: Check `SecurityConfig` includes mobile app origin
+3. **AsyncStorage errors**: Clear app data/reinstall if cart state is corrupted
+4. **Image not loading**: Item images use `ItemImage` entity with `imageUrl` field
 
 ## File Naming & Locations
 - Controllers: `*Controller.java` in `controller/` package
@@ -189,7 +269,7 @@ After building, the Spring Boot JAR will serve the compiled React app at `http:/
 - Tests: Mirror source structure in `src/test/java/` with `*Test.java` suffix
 
 ## Dependencies & Versions
-- Spring Boot: 3.3.5 (parent POM)
+- Spring Boot: 3.5.0 (parent POM)
 - Java: 21 (target version)
 - JWT: jjwt 0.12.3 (api, impl, jackson)
 - Database drivers: PostgreSQL (runtime), MySQL Connector/J (runtime), H2 (test)

@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "E-Business",
+    "slug": "ebusiness-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#3b82f6"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ebusiness.app"
+    },
+    "android": {
+      "package": "com.ebusiness.app"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
